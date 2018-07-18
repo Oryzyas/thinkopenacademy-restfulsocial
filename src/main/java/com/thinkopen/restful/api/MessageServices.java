@@ -1,8 +1,10 @@
 package com.thinkopen.restful.api;
 
+import com.sun.org.apache.regexp.internal.RE;
 import com.thinkopen.restful.api.dtos.Message;
 import com.thinkopen.restful.api.dtos.MessageIO;
 import com.thinkopen.restful.api.dtos.User;
+import com.thinkopen.restful.api.factories.responses.Response;
 
 import javax.ws.rs.*;
 import java.sql.SQLException;
@@ -31,26 +33,26 @@ public class MessageServices {
         final User loggedUser = UserServices.getLoggedUser();
 
         if(loggedUser == null)
-            return "Attualmente non sei connesso.";
+            return errorResponse("Attualmente non sei connesso.");
 
         try {
             final MessageIO msgio = dao.selectMessageIOById(loggedUser.getId(), msgId);
 
             if(msgio == null)
-                return "Messaggio non trovato.";
+                return errorResponse("Messaggio non trovato.");
 
             if(msgio.isDeleted())
-                return "Messaggio già cestinato.";
+                return errorResponse("Messaggio già cestinato.");
 
             int ar = dao.setTrashFlag(msgio, true);
 
             if(ar < 1)
-                return "Cestinamento del messaggio fallito.";
+                return errorResponse("Cestinamento del messaggio fallito.");
 
-            return "Messaggio cestinato correttamente.";
+            return successResponse("Messaggio cestinato correttamente.");
         } catch (SQLException e) {
             e.printStackTrace();
-            return "Si è verificato un errore grave durante la procedura di cestinamento del messaggio.";
+            return errorResponse("Si è verificato un errore grave durante la procedura di cestinamento del messaggio.");
         }
     }
 
@@ -60,26 +62,26 @@ public class MessageServices {
         final User loggedUser = UserServices.getLoggedUser();
 
         if(loggedUser == null)
-            return "Attualmente non sei connesso.";
+            return errorResponse("Attualmente non sei connesso.");
 
         try {
             final MessageIO msgio = dao.selectMessageIOById(loggedUser.getId(), msgId);
 
             if(msgio == null)
-                return "Messaggio non trovato.";
+                return errorResponse("Messaggio non trovato.");
 
             if(!msgio.isDeleted())
-                return "Messaggio ancora non cestinato.";
+                return errorResponse("Messaggio ancora non cestinato.");
 
             int ar = dao.setTrashFlag(msgio, false);
 
             if(ar < 1)
-                return "Recupero del messaggio fallito.";
+                return errorResponse("Recupero del messaggio fallito.");
 
-            return "Messaggio recuperato correttamente.";
+            return successResponse("Messaggio recuperato correttamente.");
         } catch (SQLException e) {
             e.printStackTrace();
-            return "Si è verificato un errore grave durante la procedura di recupero del messaggio.";
+            return errorResponse("Si è verificato un errore grave durante la procedura di recupero del messaggio.");
         }
     }
 
@@ -89,26 +91,26 @@ public class MessageServices {
         final User loggedUser = UserServices.getLoggedUser();
 
         if(loggedUser == null)
-            return "Attualmente non sei connesso.";
+            return errorResponse("Attualmente non sei connesso.");
 
         try {
             final MessageIO msgio = dao.selectMessageIOById(loggedUser.getId(), msgId);
             final Message msg = dao.selectMessageById(msgId);
 
             if(msgio == null || msg == null)
-                return "Messaggio non trovato.";
+                return errorResponse("Messaggio non trovato.");
 
             if(!msgio.isRead()) {
                 int ar = dao.setReadFlag(msgio, true);
 
                 if(ar < 1)
-                    return "Impossibile leggere il messaggio.";
+                    return errorResponse("Impossibile leggere il messaggio.");
             }
 
-            return msg.toString();
+            return writeResponse(msg);
         } catch (SQLException e) {
             e.printStackTrace();
-            return "Si è verificato un errore grave durante la lettura del messaggio.";
+            return errorResponse("Si è verificato un errore grave durante la lettura del messaggio.");
         }
     }
 
@@ -118,30 +120,30 @@ public class MessageServices {
         final User loggedUser = UserServices.getLoggedUser();
 
         if(loggedUser == null)
-            return "Attualmente non sei connesso.";
+            return errorResponse("Attualmente non sei connesso.");
 
         try {
             final MessageIO msgio = dao.selectMessageIOById(loggedUser.getId(), msgId);
             final Message msg = dao.selectMessageById(msgId);
 
             if(msgio == null || msg == null)
-                return "Messaggio non trovato.";
+                return errorResponse("Messaggio non trovato.");
 
             if(msg.getSenderId() == loggedUser.getId())
-                return "Non puoi marcare come 'non letto' un messaggio inviato da te stesso.";
+                return errorResponse("Non puoi marcare come 'non letto' un messaggio inviato da te stesso.");
 
             if(!msgio.isRead())
-                return "Messaggio ancora non letto.";
+                return errorResponse("Messaggio ancora non letto.");
 
             int ar = dao.setReadFlag(msgio, false);
 
             if(ar < 1)
-                return "Impossibile marcare il messaggio come 'non letto'.";
+                return errorResponse("Impossibile marcare il messaggio come 'non letto'.");
 
-            return "Messaggio marcato con successo come 'non letto'.";
+            return successResponse("Messaggio marcato con successo come 'non letto'.");
         } catch (SQLException e) {
             e.printStackTrace();
-            return "Si è verificato un errore grave durante la marcatura del messaggio come 'non letto'.";
+            return errorResponse("Si è verificato un errore grave durante la marcatura del messaggio come 'non letto'.");
         }
     }
 
@@ -151,18 +153,18 @@ public class MessageServices {
         final User loggedUser = UserServices.getLoggedUser();
 
         if (loggedUser == null)
-            return "Attualmente non sei connesso.";
+            return errorResponse("Attualmente non sei connesso.");
 
         try {
             List<Message> msgs = dao.selectAllSentMessages(loggedUser.getId(), deleted, null, null, -1);
 
             if(msgs.isEmpty())
-                return "Non ci sono messaggi inviati.";
+                return errorResponse("Non ci sono messaggi inviati.");
 
-            return msgs.toString();
+            return writeResponse("Messages", msgs);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
-            return "Si è verificato un errore grave durante la procedura di recupero dei messaggi inviati.";
+            return errorResponse("Si è verificato un errore grave durante la procedura di recupero dei messaggi inviati.");
         }
     }
 

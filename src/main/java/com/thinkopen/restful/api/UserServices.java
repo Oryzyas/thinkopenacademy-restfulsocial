@@ -2,6 +2,7 @@ package com.thinkopen.restful.api;
 
 import com.sun.org.apache.regexp.internal.RE;
 import com.thinkopen.restful.api.dtos.User;
+import com.thinkopen.restful.api.factories.ResponseFactory;
 import com.thinkopen.restful.api.factories.responses.Response;
 
 import javax.ws.rs.*;
@@ -30,13 +31,17 @@ public final class UserServices {
 
     @GET
     public String ping() {
-        return "pong";
+        Response r = ResponseFactory.createResponse(ResponseType.JSON);
+        r.setRootTag("root");
+        r.addAttribute("key", "value");
+
+        return r.toString();
     }
 
     @POST
     @Path("/upload")
     @Consumes(MediaType.TEXT_PLAIN)
-    public Response upload(String base64img) {
+    public String upload(String base64img) {
         if(loggedUser == null)
             return errorResponse("Attualmente non sei connesso.");
 
@@ -74,7 +79,7 @@ public final class UserServices {
 
     @POST
     @Path("/login")
-    public Response login(@QueryParam("username") String username, @QueryParam("password") String password, @QueryParam("responseType") String responseType) {
+    public String login(@QueryParam("username") String username, @QueryParam("password") String password, @QueryParam("responseType") String responseType) {
         if(loggedUser != null)
             return errorResponse("Sei già connesso.");
 
@@ -100,7 +105,7 @@ public final class UserServices {
 
     @POST
     @Path("/logout")
-    public Response logout() {
+    public String logout() {
         if(loggedUser == null)
             return errorResponse("Sei già disconnesso.");
 
@@ -112,7 +117,7 @@ public final class UserServices {
 
     @POST
     @Path("/signup")
-    public Response signup(@QueryParam("name") String name, @QueryParam("age") int age, @QueryParam("email") String email, @QueryParam("password") String password) {
+    public String signup(@QueryParam("name") String name, @QueryParam("age") int age, @QueryParam("email") String email, @QueryParam("password") String password) {
         if(loggedUser != null)
             return errorResponse("Sei attualmente connesso. Non puoi creare nuovi account.");
 
@@ -150,7 +155,7 @@ public final class UserServices {
 
     @POST
     @Path("/update/{password}")
-    public Response update(@PathParam("password") String password) {
+    public String update(@PathParam("password") String password) {
         if(loggedUser == null)
             return errorResponse("Attualmente non sei connesso.");
 
@@ -173,7 +178,7 @@ public final class UserServices {
     @POST
     @Path("/update")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response update(User user) {
+    public String update(User user) {
         if(loggedUser == null)
             return errorResponse("Attualmente non sei connesso.");
 
